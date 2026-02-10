@@ -2249,6 +2249,7 @@ int main(int argc, char** argv) {
 
 		return ipc_send_message(ipc_target_pid, ipc_message);
 	}
+	printf("Starting windowspace %s\n", WINDOWSPACE_VERSION);
 
 	g_config = (Config){0};
 	g_config.arena = arena_alloc();
