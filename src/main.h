@@ -1,7 +1,7 @@
 #ifndef WINDOWSPACE_H
 #define WINDOWSPACE_H
 
-#define WINDOWSPACE_VERSION "v0.1.8"
+#define WINDOWSPACE_VERSION "v0.1.9"
 
 #define KEYCODES_COUNT 256
 // Unsorted list of keycodes as values
