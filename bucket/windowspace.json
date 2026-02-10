@@ -1,16 +1,16 @@
 {
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Window workspace manager for Windows",
   "homepage": "https://github.com/alohaeee/windowspace",
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/alohaeee/windowspace/releases/download/v0.1.4/windowspace-v0.1.4-x64.zip",
-      "hash": "f8060469afeac6cc4da3fedea15772635f197f36defa07e1089f19bad2db883a"
+      "url": "https://github.com/alohaeee/windowspace/releases/download/v0.1.5/windowspace-v0.1.5-x64.zip",
+      "hash": "53ce8a6794d10656536874da8ea70b1e3f4e27db6ae494fc2e2d642db8819b3e"
     },
     "arm64": {
-      "url": "https://github.com/alohaeee/windowspace/releases/download/v0.1.4/windowspace-v0.1.4-arm64.zip",
-      "hash": "204de46ee4061357c2b1c5f5d1098915a0b85b1240de8f212f7e0795a6260b13"
+      "url": "https://github.com/alohaeee/windowspace/releases/download/v0.1.5/windowspace-v0.1.5-arm64.zip",
+      "hash": "c2baea6b75f1a8a59c56dd93e3ba2ba6b3f5296bd23142345bebb08c03c43269"
     }
   },
   "bin": "windowspace.exe",
