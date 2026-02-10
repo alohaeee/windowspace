@@ -2158,6 +2158,22 @@ internal int remove_auto_launch(void) {
 	return 0;
 }
 
+internal void print_help(Arena* temp_arena) {
+	printf("Usage: windowspace [options] [--ipc [--pid <pid>] <command>]\n");
+	printf("\nOptions:\n");
+	printf("  --help                         Show this help message\n");
+	printf("  --version                      Show version information\n");
+	printf("  --create-default-config        Create default config file\n");
+	printf("  --setup-auto-launch            Register program to start with Windows\n");
+	printf("  --setup-auto-launch-admin      Register program to start with Windows (admin)\n");
+	printf("  --remove-auto-launch           Remove program from Windows startup\n");
+	printf("  --ipc [--pid <pid>] <command>  Send IPC command\n");
+	String8List command_list = command_list_str(g_temp_arena, g_temp_arena);
+	printf("\nIPC Commands:\n");
+	for (String8Node* node = command_list.first; node != NULL; node = node->next) {
+		printf("  %.*s\n", str8_varg(node->string));
+	}
+}
 int main(int argc, char** argv) {
 	SetConsoleOutputCP(CP_UTF8);
 	g_main_thread_id = os_tid();
@@ -2171,19 +2187,11 @@ int main(int argc, char** argv) {
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--help") == 0) {
-			printf("Usage: windowspace [options] [--ipc [--pid <pid>] <command>]\n");
-			printf("\nOptions:\n");
-			printf("  --help                         Show this help message\n");
-			printf("  --create-default-config        Create default config file\n");
-			printf("  --setup-auto-launch            Register program to start with Windows\n");
-			printf("  --setup-auto-launch-admin      Register program to start with Windows (admin)\n");
-			printf("  --remove-auto-launch           Remove program from Windows startup\n");
-			printf("  --ipc [--pid <pid>] <command>  Send IPC command\n");
-			String8List command_list = command_list_str(g_temp_arena, g_temp_arena);
-			printf("\nIPC Commands:\n");
-			for (String8Node* node = command_list.first; node != NULL; node = node->next) {
-				printf("  %.*s\n", str8_varg(node->string));
-			}
+			print_help(g_temp_arena);
+			return 0;
+		}
+		else if (strcmp(argv[i], "--version") == 0) {
+			printf("windowspace %s\n", WINDOWSPACE_VERSION);
 			return 0;
 		}
 		else if (strcmp(argv[i], "--create-default-config") == 0) {
@@ -2213,6 +2221,11 @@ int main(int argc, char** argv) {
 			StringJoin join = {str8_lit(""), str8_lit(" "), str8_lit("")};
 			ipc_message = str8_list_join(g_temp_arena, &parts, &join);
 			break;
+		}
+		else if(strlen(argv[i]) > 0){
+			printf("Unknown option: %s\n", argv[i]);
+			print_help(g_temp_arena);
+			return 1;
 		}
 	}
 
