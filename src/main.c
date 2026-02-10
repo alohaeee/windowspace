@@ -606,7 +606,7 @@ static void tray_set_workspace(U32 workspace_index);
 
 static void workspace_set_active(WorkspacesData* workspaces_data, U32 workspace_index) {
 	if (workspaces_data->active_workspace_index == workspace_index) {
-		return 0;
+		return;
 	}
 	workspaces_data->prev_active_workspace = workspaces_data->active_workspace_index;
 	workspaces_data->active_workspace_index = workspace_index;
@@ -1302,7 +1302,11 @@ void handle_command(Command* command) {
 		case CommandType_Subprocess:
 		{
 			printf("CommandType_Subprocess subprocess_command: %.*s\n", str8_varg(command->subprocess_command));
-			OS_Handle handle = os_cmd_line_launch(command->subprocess_command);
+			OS_Handle handle = os_cmd_line_launch(command->subprocess_command, 1, 1);
+			if (os_handle_match(handle, os_handle_zero())) {
+				printf("CommandType_Subprocess: failed to launch subprocess\n");
+				break;
+			}
 			os_process_detach(handle);
 			break;
 		}
@@ -2263,6 +2267,9 @@ int main(int argc, char** argv) {
 	g_state.windows_list->arena = g_state.arena;
 	g_state.workspaces->active_workspace_index = g_config.default_workspace_index;
 	g_main_hwnd = GetConsoleWindow();
+	if (g_main_hwnd == NULL) {
+		printf("Error: failed to get console window\n");
+	}
 	tray_init(g_main_hwnd, g_state.workspaces->active_workspace_index);
 	EnumWindows(init_enum_windows, (LPARAM)&g_state.windows_list);
 	{

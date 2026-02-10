@@ -1151,6 +1151,7 @@ typedef struct OS_ProcessInfo OS_ProcessInfo;
 struct OS_ProcessInfo
 {
   U32 pid;
+  B32 is_elevated;
   String8 binary_path;
   String8 initial_path;
   String8 user_program_data_path;
@@ -1228,6 +1229,8 @@ struct OS_ProcessLaunchParams
   String8List env;
   B32 inherit_env;
   B32 consoleless;
+  B32 non_elevated;
+  B32 new_process_group;
   OS_Handle stdout_file;
   OS_Handle stderr_file;
   OS_Handle stdin_file;
@@ -1381,7 +1384,7 @@ internal void      os_process_detach(OS_Handle handle);
 internal B32       os_process_kill(OS_Handle handle);
 
 //- rjf: process launch helpers
-internal OS_Handle os_cmd_line_launch(String8 string);
+internal OS_Handle os_cmd_line_launch(String8 string, B32 non_elevated, B32 new_process_group);
 
 ////////////////////////////////
 //~ rjf: Time Types
@@ -5342,6 +5345,20 @@ os_w32_state_init(void)
     {
       OS_ProcessInfo *info = &os_w32_state.process_info;
       info->pid = GetCurrentProcessId();
+      info->is_elevated = 0;
+      {
+        HANDLE token = 0;
+        if(OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+        {
+          TOKEN_ELEVATION elevation = {0};
+          DWORD bytes = 0;
+          if(GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &bytes))
+          {
+            info->is_elevated = (B32)elevation.TokenIsElevated;
+          }
+          CloseHandle(token);
+        }
+      }
       
       // binary path
       {
@@ -5418,6 +5435,7 @@ os_lnx_state_init(void)
     {
       OS_ProcessInfo *info = &os_lnx_state.process_info;
       info->pid = (U32)getpid();
+      info->is_elevated = (geteuid() == 0);
       
       // binary path
       {
@@ -5468,7 +5486,7 @@ os_get_process_info(void)
 //~ rjf: Process Launcher Helpers Implementation
 
 internal OS_Handle
-os_cmd_line_launch(String8 string)
+os_cmd_line_launch(String8 string, B32 non_elevated, B32 new_process_group)
 {
   Temp scratch = temp_begin(arena_alloc());
   
@@ -5570,6 +5588,9 @@ os_cmd_line_launch(String8 string)
     params.cmd_line = cmdline;
     params.path = exe_folder;
     params.inherit_env = 1;
+    params.consoleless = 1;
+    params.non_elevated = non_elevated;
+    params.new_process_group = new_process_group;
     params.stdout_file = stdout_handle;
     handle = os_process_launch(&params);
     
@@ -5650,10 +5671,14 @@ os_process_launch(OS_ProcessLaunchParams *params)
   {
     creation_flags |= CREATE_NO_WINDOW;
   }
+  if(params->new_process_group)
+  {
+    creation_flags |= CREATE_NEW_PROCESS_GROUP;
+  }
   
   //- rjf: launch
-  BOOL inherit_handles = 0;
   STARTUPINFOW startup_info = {sizeof(startup_info)};
+  BOOL inherit_handles = 0;
   if(!os_handle_match(params->stdout_file, os_handle_zero()))
   {
     HANDLE stdout_handle = (HANDLE)params->stdout_file.u64[0];
@@ -5676,10 +5701,68 @@ os_process_launch(OS_ProcessLaunchParams *params)
     inherit_handles = 1;
   }
   PROCESS_INFORMATION process_info = {0};
-  if(CreateProcessW(0, (WCHAR*)cmd16.str, 0, 0, inherit_handles, creation_flags, 
-                    use_null_env_arg ? 0 : (WCHAR*)env16.str, 
-                    dir16.size > 0 ? (WCHAR*)dir16.str : 0, 
-                    &startup_info, &process_info))
+  B32 current_is_elevated = os_get_process_info()->is_elevated;
+  
+  if(params->non_elevated && current_is_elevated)
+  {
+    //enable SE_IMPERSONATE_NAME privilege (required for CreateProcessWithTokenW)
+    {
+      HANDLE token = 0;
+      if(OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY, &token))
+      {
+        LUID luid = {0};
+        if(LookupPrivilegeValueW(0, SE_IMPERSONATE_NAME, &luid))
+        {
+          TOKEN_PRIVILEGES tp = {0};
+          tp.PrivilegeCount = 1;
+          tp.Privileges[0].Luid = luid;
+          tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+          AdjustTokenPrivileges(token, 0, &tp, 0, 0, 0);
+        }
+        CloseHandle(token);
+      }
+    }
+    
+    HWND shell_wnd = GetShellWindow();
+    DWORD shell_pid = 0;
+    GetWindowThreadProcessId(shell_wnd, &shell_pid);
+    
+    HANDLE shell_process = 0;
+    HANDLE shell_token = 0;
+    HANDLE user_token = 0;
+
+    do
+    {
+      shell_process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, shell_pid);
+      if(!shell_process) { break; }
+
+      if(!OpenProcessToken(shell_process, TOKEN_DUPLICATE|TOKEN_QUERY, &shell_token)) { break; }
+
+      if(!DuplicateTokenEx(shell_token,
+                           TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_ASSIGN_PRIMARY | TOKEN_ADJUST_DEFAULT | TOKEN_ADJUST_SESSIONID,
+                           0, SecurityImpersonation, TokenPrimary, &user_token))
+      { break; }
+
+      if(!CreateProcessWithTokenW(user_token, 0, 0, (WCHAR*)cmd16.str,
+                                  creation_flags,
+                                  use_null_env_arg ? 0 : (WCHAR*)env16.str,
+                                  dir16.size > 0 ? (WCHAR*)dir16.str : 0,
+                                  &startup_info, &process_info))
+      { break; }
+    } while(0);
+
+    if(user_token)   { CloseHandle(user_token); }
+    if(shell_token)  { CloseHandle(shell_token); }
+    if(shell_process){ CloseHandle(shell_process); }
+  }
+  else
+  {
+    CreateProcessW(0, (WCHAR*)cmd16.str, 0, 0, inherit_handles, creation_flags,
+                   use_null_env_arg ? 0 : (WCHAR*)env16.str,
+                   dir16.size > 0 ? (WCHAR*)dir16.str : 0,
+                   &startup_info, &process_info);
+  }
+  if(process_info.hProcess)
   {
     result.u64[0] = (U64)process_info.hProcess;
     CloseHandle(process_info.hThread);
@@ -5796,6 +5879,10 @@ os_process_launch(OS_ProcessLaunchParams *params)
   if(pid == 0)
   {
     // Child process
+    if(params->new_process_group)
+    {
+      setpgid(0, 0);
+    }
     if(!os_handle_match(params->stdout_file, os_handle_zero()))
     {
       dup2((int)params->stdout_file.u64[0], STDOUT_FILENO);
