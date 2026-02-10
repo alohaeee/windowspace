@@ -1,6 +1,8 @@
 #ifndef WINDOWSPACE_H
 #define WINDOWSPACE_H
 
+#define WINDOWSPACE_VERSION "v0.1.5"
+
 #define KEYCODES_COUNT 256
 // Unsorted list of keycodes as values
 // VK_B, VK_A, VK_C, ...
