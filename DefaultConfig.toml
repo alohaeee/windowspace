@@ -7,13 +7,20 @@ default-workspace-index = "1"
     lwin_3 = "workspace_focus 3"
     lwin_4 = "workspace_focus 4"
     lwin_5 = "workspace_focus 5"
+    lwin_6 = "workspace_focus 6"
+    lwin_7 = "workspace_focus 7"
+    lwin_8 = "workspace_focus 8"
+    lwin_9 = "workspace_focus 9"
+    lwin_0 = "workspace_focus 0"
     lwin_e = "workspace_focus e"
     lwin_a = "workspace_focus a"
     lwin_c = "workspace_focus c"
     lwin_r = "workspace_focus r"
     lwin_f = "workspace_focus f"
+    lwin_t = "workspace_focus t"
     lwin_s = "workspace_focus s"
     lwin_m = "workspace_focus m"
+    lwin_b = "workspace_focus b"
     lwin_x = "workspace_focus x"
     lwin_z = "workspace_focus z"
 
@@ -22,12 +29,19 @@ default-workspace-index = "1"
     lwin_shift_3 = "workspace_move 3"
     lwin_shift_4 = "workspace_move 4"
     lwin_shift_5 = "workspace_move 5"
+    lwin_shift_6 = "workspace_move 6"
+    lwin_shift_7 = "workspace_move 7"
+    lwin_shift_8 = "workspace_move 8"
+    lwin_shift_9 = "workspace_move 9"
+    lwin_shift_0 = "workspace_move 0"
     lwin_shift_e = "workspace_move e"
     lwin_shift_r = "workspace_move r"
+    lwin_shift_t = "workspace_move t"
     lwin_shift_a = "workspace_move a"
     lwin_shift_c = "workspace_move c"
     lwin_shift_f = "workspace_move f"
     lwin_shift_m = "workspace_move m"
+    lwin_shift_b = "workspace_move b"
     lwin_shift_x = "workspace_move x"
     lwin_shift_z = "workspace_move z"
 
@@ -39,8 +53,6 @@ default-workspace-index = "1"
     lwin_w = "window_close"
 
     lwin_ctrl_e = 'subprocess "C:\Program Files\Google\Chrome\Application\chrome.exe" --profile-directory="Default"'
-    lwin_ctrl_2 = 'subprocess "C:\Users\dubrovskiy-v\AppData\Local\Microsoft\WindowsApps\wt.exe"'
-    lwin_ctrl_s = 'subprocess "C:\Users\dubrovskiy-v\AppData\Local\Microsoft\WindowsApps\Slack.exe"'
 
 [mode.1.binding]
     esc = 'subprocess cmd.exe /C windowspace.exe --ipc binding_layer_change 0 && windowspace.exe --ipc reload_config'
@@ -49,11 +61,6 @@ default-workspace-index = "1"
     title = "*- Google Chrome"
     process = "chrome.exe"
     command = "workspace_move e"
-
-[[on-window-detected]]
-    title = "*[Business] - Google Chrome"
-    process = "chrome.exe"
-    command = "workspace_move r"
 
 [[on-window-detected]]
     process = "Slack.exe"
