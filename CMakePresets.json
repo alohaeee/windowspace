@@ -1,0 +1,32 @@
+{
+    "version": 5,
+    "configurePresets": [
+        {
+            "name": "VS",
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "build/vs",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+            }
+        },
+        {
+            "name": "VS-ARM64",
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "build/vs-arm64",
+            "architecture": {
+                "value": "ARM64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+            }
+        }
+    ],
+  "buildPresets": [
+    { "name": "build-debug", "configurePreset": "VS", "configuration": "Debug" },
+    { "name": "build-release", "configurePreset": "VS", "configuration": "Release" },
+    { "name": "build-release-arm64", "configurePreset": "VS-ARM64", "configuration": "Release" }
+  ]
+}

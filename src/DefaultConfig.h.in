@@ -1,0 +1,6 @@
+#pragma once
+#include <stddef.h>
+
+static const unsigned char default_config_data[] = {
+    @DEFAULT_CONFIG_TOML_BYTES@
+};

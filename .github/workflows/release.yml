@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x64
+            preset: VS
+            build-preset: build-release
+            build-dir: build/vs/Release
+          - arch: arm64
+            preset: VS-ARM64
+            build-preset: build-release-arm64
+            build-dir: build/vs-arm64/Release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build Release
+        run: cmake --build --preset ${{ matrix.build-preset }}
+
+      - name: Package
+        run: |
+          mkdir package
+          copy ${{ matrix.build-dir }}\windowspace.exe package\
+          copy LICENSE package\
+          cd package
+          7z a ..\windowspace-${{ github.ref_name }}-${{ matrix.arch }}.zip *
+
+      - name: Create or update Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create ${{ github.ref_name }} --generate-notes --latest || true
+          gh release upload ${{ github.ref_name }} windowspace-${{ github.ref_name }}-${{ matrix.arch }}.zip --clobber
+
+  update-manifest:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download ${{ github.ref_name }} --pattern "*.zip"
+
+      - name: Update Scoop manifest
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          HASH_X64=$(sha256sum windowspace-${{ github.ref_name }}-x64.zip | cut -d ' ' -f1)
+          HASH_ARM64=$(sha256sum windowspace-${{ github.ref_name }}-arm64.zip | cut -d ' ' -f1)
+
+          jq \
+            --arg ver "$VERSION" \
+            --arg hash_x64 "$HASH_X64" \
+            --arg hash_arm64 "$HASH_ARM64" \
+            --arg url_x64 "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/windowspace-${{ github.ref_name }}-x64.zip" \
+            --arg url_arm64 "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/windowspace-${{ github.ref_name }}-arm64.zip" \
+            '.version = $ver
+             | .architecture."64bit".url = $url_x64
+             | .architecture."64bit".hash = $hash_x64
+             | .architecture.arm64.url = $url_arm64
+             | .architecture.arm64.hash = $hash_arm64' \
+            bucket/windowspace.json > bucket/windowspace.json.tmp
+
+          mv bucket/windowspace.json.tmp bucket/windowspace.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bucket/windowspace.json
+          git commit -m "Update Scoop manifest to ${{ github.ref_name }}"
+          git push

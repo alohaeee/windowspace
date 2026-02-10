@@ -1,0 +1,60 @@
+config-version = 1
+
+default-workspace-index = "1"
+[mode.0.binding]
+    lwin_1 = "workspace_focus 1"
+    lwin_2 = "workspace_focus 2"
+    lwin_3 = "workspace_focus 3"
+    lwin_4 = "workspace_focus 4"
+    lwin_5 = "workspace_focus 5"
+    lwin_e = "workspace_focus e"
+    lwin_a = "workspace_focus a"
+    lwin_c = "workspace_focus c"
+    lwin_r = "workspace_focus r"
+    lwin_f = "workspace_focus f"
+    lwin_s = "workspace_focus s"
+    lwin_m = "workspace_focus m"
+    lwin_x = "workspace_focus x"
+    lwin_z = "workspace_focus z"
+
+    lwin_shift_1 = "workspace_move 1"
+    lwin_shift_2 = "workspace_move 2"
+    lwin_shift_3 = "workspace_move 3"
+    lwin_shift_4 = "workspace_move 4"
+    lwin_shift_5 = "workspace_move 5"
+    lwin_shift_e = "workspace_move e"
+    lwin_shift_r = "workspace_move r"
+    lwin_shift_a = "workspace_move a"
+    lwin_shift_c = "workspace_move c"
+    lwin_shift_f = "workspace_move f"
+    lwin_shift_m = "workspace_move m"
+    lwin_shift_x = "workspace_move x"
+    lwin_shift_z = "workspace_move z"
+
+    lwin_h = "window_focus_prev"
+    lwin_l = "window_focus_next"
+    lwin_j = "workspace_back_and_forth"
+    lwin_k = "workspace_back_and_forth"
+    "lwin_shift_;" = "binding_layer_change 1"
+    lwin_w = "window_close"
+
+    lwin_ctrl_e = 'subprocess "C:\Program Files\Google\Chrome\Application\chrome.exe" --profile-directory="Default"'
+    lwin_ctrl_2 = 'subprocess "C:\Users\dubrovskiy-v\AppData\Local\Microsoft\WindowsApps\wt.exe"'
+    lwin_ctrl_s = 'subprocess "C:\Users\dubrovskiy-v\AppData\Local\Microsoft\WindowsApps\Slack.exe"'
+
+[mode.1.binding]
+    esc = 'subprocess cmd.exe /C windowspace.exe --ipc binding_layer_change 0 && windowspace.exe --ipc reload_config'
+
+[[on-window-detected]]
+    title = "*- Google Chrome"
+    process = "chrome.exe"
+    command = "workspace_move e"
+
+[[on-window-detected]]
+    title = "*[Business] - Google Chrome"
+    process = "chrome.exe"
+    command = "workspace_move r"
+
+[[on-window-detected]]
+    process = "Slack.exe"
+    command = "workspace_move s"
