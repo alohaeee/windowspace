@@ -65,3 +65,7 @@ default-workspace-index = "1"
 [[on-window-detected]]
     process = "Slack.exe"
     command = "workspace_move s"
+
+[[on-window-detected]]
+    process = "windowspace.exe"
+    command = "workspace_move 0"
