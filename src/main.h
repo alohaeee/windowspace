@@ -99,17 +99,30 @@ CommandArgType command_arg_type_from_name(String8 name) {
     return CommandArgType_None;
 }
 
-String8List command_list_str(Arena* arena) {
+String8List command_list_str(Arena* arena, Arena* temp_arena) {
     String8List command_list = {0};
+
+    // Step 1: Build left column strings
+    String8 left_parts[CommandType_COUNT] = {0};
+    U64 max_left_width = 0;
     for (int i = 1; i < CommandType_COUNT; i++) {
         String8 name = command_type_name((CommandType)i);
-        String8 arg_type_name = command_arg_type_name(g_command_table[i].arg_type);
         if (g_command_table[i].arg_type == CommandArgType_None) {
-            str8_list_push(arena, &command_list, str8f(arena, "%.*s - %s", str8_varg(name), g_command_table[i].description));
+            left_parts[i] = str8f(temp_arena, "%.*s", str8_varg(name));
         }
         else {
-            str8_list_push(arena, &command_list, str8f(arena, "%.*s (<%.*s>) - %s", str8_varg(name), str8_varg(arg_type_name), g_command_table[i].description));
+            String8 arg_type_name = command_arg_type_name(g_command_table[i].arg_type);
+            left_parts[i] = str8f(temp_arena, "%.*s (<%.*s>)", str8_varg(name), str8_varg(arg_type_name));
         }
+        if (left_parts[i].size > max_left_width) {
+            max_left_width = left_parts[i].size;
+        }
+    }
+
+    // Step 2: Combine with aligned descriptions
+    for (int i = 1; i < CommandType_COUNT; i++) {
+        int padding = (int)(max_left_width - left_parts[i].size);
+        str8_list_push(arena, &command_list, str8f(arena, "%.*s%*s %.*s", str8_varg(left_parts[i]), padding, "", str8_varg(g_command_table[i].description)));
     }
     return command_list;
 }

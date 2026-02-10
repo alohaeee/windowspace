@@ -2045,13 +2045,13 @@ int main(int argc, char **argv)
       {
         printf("Usage: windowspace [options] [--ipc [--pid <pid>] <command>]\n");
         printf("\nOptions:\n");
-        printf("  --help                    Show this help message\n");
-        printf("  --create-default-config   Create default config file\n");
-        printf("  --setup_auto_launch       Register program to start with Windows\n");
-        printf("  --setup_auto_launch_admin Register program to start with Windows (admin)\n");
-        printf("  --remove_auto_launch      Remove program from Windows startup\n");
+        printf("  --help                         Show this help message\n");
+        printf("  --create-default-config        Create default config file\n");
+        printf("  --setup_auto_launch            Register program to start with Windows\n");
+        printf("  --setup_auto_launch_admin      Register program to start with Windows (admin)\n");
+        printf("  --remove_auto_launch           Remove program from Windows startup\n");
         printf("  --ipc [--pid <pid>] <command>  Send IPC command\n");
-        String8List command_list = command_list_str(g_temp_arena);
+        String8List command_list = command_list_str(g_temp_arena, g_temp_arena);
         printf("\nIPC Commands:\n");
         for (String8Node *node = command_list.first; node != NULL; node = node->next) {
             printf("  %.*s\n", str8_varg(node->string));
