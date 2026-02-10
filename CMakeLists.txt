@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(windowspace)
 
-add_library(tomlc17 STATIC deps/tomlc17.cpp)
-target_include_directories(tomlc17 PUBLIC deps)
+add_library(tomlc17 STATIC deps/tomlc17/tomlc17.cpp)
+target_include_directories(tomlc17 PUBLIC deps/tomlc17)
 
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/DefaultConfig.toml" DEFAULT_CONFIG_TOML_HEX HEX)
 string(LENGTH "${DEFAULT_CONFIG_TOML_HEX}" DEFAULT_CONFIG_TOML_HEX_LEN)
@@ -28,6 +28,7 @@ configure_file(
 
 add_executable(windowspace src/main.c)
 target_link_libraries(windowspace tomlc17)
+target_include_directories(windowspace PRIVATE deps/raddcore/)
 target_include_directories(
     windowspace
     PRIVATE
