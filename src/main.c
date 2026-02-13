@@ -851,14 +851,26 @@ String8 get_window_name(Arena* arena, HWND hwnd) {
 	return str8_from_16(arena, get_window_name16(arena, hwnd));
 }
 
-String16 get_process_name16(Arena* arena, HWND hwnd) {
+HANDLE get_process_handle(HWND hwnd) {
 	DWORD process_id = 0;
 	if (!GetWindowThreadProcessId(hwnd, &process_id)) {
-		return str16(L"", 0);
+		return NULL;
 	}
+	return OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+}
 
-	HANDLE process_handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, process_id);
+DWORD get_process_id(HWND hwnd) {
+	HANDLE process_handle = get_process_handle(hwnd);
+	if (process_handle == NULL) {
+		return 0;
+	}
+	DWORD process_id = GetProcessId(process_handle);
+	CloseHandle(process_handle);
+	return process_id;
+}
 
+String16 get_process_name16(Arena* arena, HWND hwnd) {
+	HANDLE process_handle = get_process_handle(hwnd);
 	if (process_handle != NULL) {
 		wchar_t* buffer = push_array(arena, wchar_t, 255);
 		if (GetModuleFileNameExW(process_handle, NULL, buffer, 255)) {
@@ -1390,7 +1402,6 @@ void handle_command(Command* command) {
 					break;
 				}
 				active_window_state->workspace_index = command->workspace_index;
-				// TODO: launch window as administrator
 				printf(
 					"moved window %s to workspace %u (%c)\n",
 					wnd_get_state_info_string(g_temp_arena, active_window_state), command->workspace_index,
@@ -1408,6 +1419,47 @@ void handle_command(Command* command) {
 				}
 
 			printf("CommandType_WorkspaceMove\n");
+			break;
+		}
+		case CommandType_WorkspaceProcessMove:
+		{
+			printf(
+				"CommandType_WorkspaceProcessMove workspace_index: %u (%c)\n", command->workspace_index,
+				command->workspace_index);
+			HWND         active_window = GetForegroundWindow();
+			WindowState* active_window_state = find_wnd(g_state.windows_list, active_window);
+			if (active_window_state == NULL) {
+				printf("CommandType_WorkspaceProcessMove: active_window_state is NULL\n");
+				break;
+			}
+
+			DWORD process_id = get_process_id(active_window_state->hwnd);
+			if (process_id == 0) {
+				printf("CommandType_WorkspaceProcessMove: failed to get process id\n");
+				break;
+			}
+			for EachNode(window_state, WindowState, g_state.windows_list->head) {
+				DWORD wnd_process_id = get_process_id(window_state->hwnd);
+				if (wnd_process_id == process_id) {
+					window_state->workspace_index = command->workspace_index;
+					printf(
+						"moved window %s to workspace %u (%c)\n",
+						wnd_get_state_info_string(g_temp_arena, window_state), command->workspace_index,
+						command->workspace_index);
+					wnd_hide(window_state->hwnd);
+				}
+			}
+
+			// Focus on next wnd in workspace
+			for
+				EachNode(window_state, WindowState, g_state.windows_list->head) {
+					if (window_state->workspace_index == g_state.workspaces->active_workspace_index) {
+						wnd_focus(window_state->hwnd);
+						break;
+					}
+				}
+
+			printf("CommandType_WorkspaceProcessMove\n");
 			break;
 		}
 		default:
@@ -2226,7 +2278,7 @@ int main(int argc, char** argv) {
 			ipc_message = str8_list_join(g_temp_arena, &parts, &join);
 			break;
 		}
-		else if(strlen(argv[i]) > 0){
+		else if (strlen(argv[i]) > 0) {
 			printf("Unknown option: %s\n", argv[i]);
 			print_help(g_temp_arena);
 			return 1;

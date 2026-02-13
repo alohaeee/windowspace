@@ -1,7 +1,7 @@
 #ifndef WINDOWSPACE_H
 #define WINDOWSPACE_H
 
-#define WINDOWSPACE_VERSION "v0.1.9"
+#define WINDOWSPACE_VERSION "v0.1.10"
 
 #define KEYCODES_COUNT 256
 // Unsorted list of keycodes as values
@@ -24,6 +24,7 @@ enum CommandType {
 	CommandType_None = 0,
 	CommandType_WorkspaceFocus,
 	CommandType_WorkspaceMove,
+	CommandType_WorkspaceProcessMove,
 	CommandType_WorkspaceBackAndForth,
 	CommandType_WindowFocusNext,
 	CommandType_WindowFocusPrev,
@@ -57,6 +58,7 @@ void init_command_table() {
 		{str8_lit("none"), CommandArgType_None},
 		{str8_lit("workspace_focus"), CommandArgType_Char, str8_lit("Focus workspace by index")},
 		{str8_lit("workspace_move"), CommandArgType_Char, str8_lit("Move window to workspace by index")},
+		{str8_lit("workspace_process_move"), CommandArgType_Char, str8_lit("Move all windows of a process to a workspace by index")},
 		{str8_lit("workspace_back_and_forth"), CommandArgType_None,
 		 str8_lit("Focus between current and previous workspaces")},
 		{str8_lit("window_focus_next"), CommandArgType_None, str8_lit("Focus next window")},
