@@ -2051,6 +2051,7 @@ internal void keyboard_hook_thread_entry(void* p) {
 		g_keyboard_thread_state->arena = arena;
 	}
 	os_semaphore_drop(g_keyboard_thread_ready_semaphore);
+	printf("Keyboard hook thread ready\n");
 
 	HHOOK hook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
 
@@ -2078,6 +2079,7 @@ internal void keyboard_hook_thread_entry(void* p) {
 			}
 		}
 	}
+	printf("Keyboard hook thread exiting\n");
 	arena_release(g_keyboard_thread_state->arena);
 	UnhookWindowsHookEx(hook);
 }
