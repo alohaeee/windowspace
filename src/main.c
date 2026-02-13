@@ -1438,17 +1438,18 @@ void handle_command(Command* command) {
 				printf("CommandType_WorkspaceProcessMove: failed to get process id\n");
 				break;
 			}
-			for EachNode(window_state, WindowState, g_state.windows_list->head) {
-				DWORD wnd_process_id = get_process_id(window_state->hwnd);
-				if (wnd_process_id == process_id) {
-					window_state->workspace_index = command->workspace_index;
-					printf(
-						"moved window %s to workspace %u (%c)\n",
-						wnd_get_state_info_string(g_temp_arena, window_state), command->workspace_index,
-						command->workspace_index);
-					wnd_hide(window_state->hwnd);
+			for
+				EachNode(window_state, WindowState, g_state.windows_list->head) {
+					DWORD wnd_process_id = get_process_id(window_state->hwnd);
+					if (wnd_process_id == process_id) {
+						window_state->workspace_index = command->workspace_index;
+						printf(
+							"moved window %s to workspace %u (%c)\n",
+							wnd_get_state_info_string(g_temp_arena, window_state), command->workspace_index,
+							command->workspace_index);
+						wnd_hide(window_state->hwnd);
+					}
 				}
-			}
 
 			// Focus on next wnd in workspace
 			for
